@@ -3,10 +3,134 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:MedicalTaskFlow.Desktop"
+        xmlns:vm="clr-namespace:MedicalTaskFlow.Desktop.ViewModels"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
+        Title="MedicalTaskFlow - Enterprise Task Manager"
+        Height="600" Width="900"
+        WindowStartupLocation="CenterScreen"
+        d:DataContext="{d:DesignInstance vm:MainViewModel}">
+
+    <Grid Margin="10">
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>   <!-- Header -->
+            <RowDefinition Height="Auto"/>   <!-- Add Task -->
+            <RowDefinition Height="*"/>     <!-- Task List -->
+            <RowDefinition Height="Auto"/>   <!-- Buttons + Status -->
+        </Grid.RowDefinitions>
+
+        <!-- HEADER -->
+        <TextBlock Grid.Row="0"
+                   Text="Task Management System"
+                   FontSize="24"
+                   FontWeight="Bold"
+                   Margin="0 0 0 10"/>
+
+        <!-- ADD TASK SECTION -->
+        <Grid Grid.Row="1" Margin="0 0 0 10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBox Grid.Column="0"
+                     Text="{Binding NewTaskTitle, UpdateSourceTrigger=PropertyChanged}"
+                     FontSize="14"
+                     Padding="5"
+                     VerticalContentAlignment="Center"
+                     Margin="0 0 10 0">
+                <TextBox.InputBindings>
+                    <KeyBinding Key="Enter"
+                                Command="{Binding AddTaskCommand}"/>
+                </TextBox.InputBindings>
+            </TextBox>
+
+            <Button Grid.Column="1"
+                    Content="Add Task"
+                    Padding="15,5"
+                    FontSize="14"
+                    Background="#4CAF50"
+                    Foreground="White"
+                    BorderThickness="0"
+                    Cursor="Hand"
+                    Command="{Binding AddTaskCommand}"/>
+        </Grid>
+
+        <!-- TASK LIST -->
+        <DataGrid Grid.Row="2"
+                  ItemsSource="{Binding Tasks}"
+                  SelectedItem="{Binding SelectedTask}"
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False"
+                  SelectionMode="Single"
+                  GridLinesVisibility="Horizontal"
+                  HeadersVisibility="Column"
+                  AlternatingRowBackground="#F5F5F5">
+
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="ID"
+                                    Binding="{Binding Id}"
+                                    Width="50"
+                                    IsReadOnly="True"/>
+
+                <DataGridTextColumn Header="Title"
+                                    Binding="{Binding Title}"
+                                    Width="*"
+                                    IsReadOnly="True"/>
+
+                <DataGridTextColumn Header="Priority"
+                                    Binding="{Binding Priority}"
+                                    Width="100"
+                                    IsReadOnly="True"/>
+
+                <DataGridTextColumn Header="Status"
+                                    Binding="{Binding Status}"
+                                    Width="120"
+                                    IsReadOnly="True"/>
+
+                <DataGridTextColumn Header="Due Date"
+                                    Binding="{Binding DueDate, StringFormat='{}{0:MM/dd/yyyy}'}"
+                                    Width="120"
+                                    IsReadOnly="True"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- ACTION BUTTONS + STATUS BAR -->
+        <Grid Grid.Row="3" Margin="0 10 0 0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                <Button Content="Complete Task"
+                        Command="{Binding CompleteTaskCommand}"
+                        Padding="10,5"
+                        Background="#2196F3"
+                        Foreground="White"
+                        BorderThickness="0"
+                        Margin="0 0 10 0"/>
+
+                <Button Content="Delete Task"
+                        Command="{Binding DeleteTaskCommand}"
+                        Padding="10,5"
+                        Background="#F44336"
+                        Foreground="White"
+                        BorderThickness="0"
+                        Margin="0 0 10 0"/>
+
+                <Button Content="Refresh"
+                        Command="{Binding LoadTasksCommand}"
+                        Padding="10,5"/>
+            </StackPanel>
+
+            <TextBlock Grid.Column="1"
+                       Text="{Binding StatusMessage}"
+                       VerticalAlignment="Center"
+                       HorizontalAlignment="Right"
+                       Foreground="Gray"
+                       FontStyle="Italic"/>
+        </Grid>
 
     </Grid>
 </Window>
