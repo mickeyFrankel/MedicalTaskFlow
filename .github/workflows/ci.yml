@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build-and-test:
+    # MUST use windows-latest because this is a WPF application
+    # WPF requires Windows-specific APIs and net8.0-windows framework
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build solution
+      run: dotnet build --configuration Release --no-restore
+
+    - name: Run unit tests
+      run: dotnet test tests/MedicalTaskFlow.Tests.Unit/MedicalTaskFlow.Tests.Unit.csproj --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=unit-tests.trx"
+
+    - name: Run integration tests
+      run: dotnet test tests/MedicalTaskFlow.Tests.Integration/MedicalTaskFlow.Tests.Integration.csproj --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=integration-tests.trx"
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results
+        path: '**/TestResults/*.trx'
+
+    - name: Publish test results
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Test Results
+        path: '**/TestResults/*.trx'
+        reporter: dotnet-trx
+
+  code-quality:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build solution
+      run: dotnet build --configuration Release --no-restore
+
+    - name: Run code analysis
+      run: dotnet build --no-restore /p:RunAnalyzers=true /p:TreatWarningsAsErrors=false

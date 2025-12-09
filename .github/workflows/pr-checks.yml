@@ -1,0 +1,52 @@
+name: PR Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  validate-pr:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build solution
+      run: dotnet build --configuration Debug --no-restore
+
+    - name: Run all tests
+      run: dotnet test --configuration Debug --no-build --verbosity normal
+
+    - name: Check for TODO comments
+      shell: pwsh
+      run: |
+        $todos = Get-ChildItem -Path src,tests -Recurse -Include *.cs | Select-String -Pattern "TODO|FIXME|HACK" -CaseSensitive
+        if ($todos) {
+          Write-Host "Found TODO/FIXME/HACK comments:"
+          $todos | ForEach-Object { Write-Host $_ }
+          Write-Host "::warning::Consider addressing these before merging"
+        }
+
+    - name: PR size check
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const pr = context.payload.pull_request;
+          const additions = pr.additions;
+          const deletions = pr.deletions;
+          const changes = additions + deletions;
+
+          if (changes > 500) {
+            core.warning(`This PR has ${changes} changes. Consider breaking it into smaller PRs.`);
+          }
